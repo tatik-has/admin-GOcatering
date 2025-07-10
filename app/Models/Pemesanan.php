@@ -27,7 +27,6 @@ class Pemesanan extends Model
     {
         return $this->belongsTo(User::class);
     }
-
     // Relasi ke tabel menus
     public function menu()
     {

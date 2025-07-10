@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\pemesananController;
+use App\Http\Controllers\PemesananController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PaketanController;
 use App\Http\Controllers\MenuController;
@@ -36,10 +36,11 @@ Route::get('/katering/{id}', [MenuController::class, 'showKatering']);
 Route::get('/paket-bulanan', [PaketanController::class, 'paketBulanan']);
 Route::get('/paket-bulanan/{id}', [PaketanController::class, 'showPaketBulanan']);
 
-
 // ======================= PEMESANAN =====================
-Route::post('/pesanan', [pemesananController::class, 'store']);
-Route::get('/pesanan', [pemesananController::class, 'index'])->middleware('auth:sanctum'); // Data pesanan user
-
+Route::post('/pesanan', [pemesananController::class, 'store'])->middleware('auth:sanctum');
 Route::get('/pesanan', [pemesananController::class, 'index'])->middleware('auth:sanctum');
 Route::get('/pesanan/{order}', [pemesananController::class, 'show'])->middleware('auth:sanctum');
+
+// ======================= PESANAN (ADMIN FILAMENT) =======
+// Route khusus untuk Filament Admin - tanpa auth karena sudah di-handle di Filament
+// Route::get('/pesanan', [PemesananController::class, 'getAllForAdmin']);

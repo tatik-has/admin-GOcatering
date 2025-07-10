@@ -65,9 +65,9 @@ class OrderResource extends Resource
                     ->disabled() // Penting: Jangan biarkan admin mengedit item pesanan langsung dari sini
                     ->defaultItems(0)
                     ->addActionLabel('Tambah Item (Tidak Disarankan)'), // Jangan biarkan menambah item
-                    //->disableItemCreation() // Uncomment ini jika tidak mau ada tombol add
-                    //->disableItemDeletion() // Uncomment ini jika tidak mau ada tombol delete
-                    //->disableItemMovement(), // Uncomment ini jika tidak mau bisa diatur ulang posisinya
+                //->disableItemCreation() // Uncomment ini jika tidak mau ada tombol add
+                //->disableItemDeletion() // Uncomment ini jika tidak mau ada tombol delete
+                //->disableItemMovement(), // Uncomment ini jika tidak mau bisa diatur ulang posisinya
 
                 Forms\Components\Grid::make(2)
                     ->schema([
@@ -104,7 +104,7 @@ class OrderResource extends Resource
                     ->label('Nama Pelanggan')
                     ->searchable() // Bisa dicari
                     // Jika Anda menggunakan relasi user, bisa begini:
-                    ->getStateUsing(fn (Order $record): string => $record->customer_name ?? ($record->user->name ?? 'N/A')),
+                    ->getStateUsing(fn(Order $record): string => $record->customer_name ?? ($record->user->name ?? 'N/A')),
 
                 TextColumn::make('items')
                     ->label('Pesanan')
@@ -125,7 +125,7 @@ class OrderResource extends Resource
                     ->label('Request')
                     ->default('-')
                     ->color('secondary'), // Untuk warna abu-abu
-                    
+
                 TextColumn::make('items')
                     ->label('Jumlah')
                     ->formatStateUsing(function (string $state, Order $record) {
@@ -155,7 +155,7 @@ class OrderResource extends Resource
                     ->label('No Hp')
                     ->searchable()
                     // Jika Anda menggunakan relasi user, bisa begini:
-                    ->getStateUsing(fn (Order $record): string => $record->customer_phone ?? ($record->user->phone_number ?? 'N/A')),
+                    ->getStateUsing(fn(Order $record): string => $record->customer_phone ?? ($record->user->phone_number ?? 'N/A')),
 
                 BadgeColumn::make('status')
                     ->label('Status')
@@ -180,33 +180,28 @@ class OrderResource extends Resource
                     ->label('Filter Status'),
             ])
             ->actions([
-                // Aksi "Sudah Diantar" / "Belum Diantar"
                 Action::make('toggle_delivery')
-                    ->label(fn (Order $record): string => $record->status === 'delivered' ? 'Sudah Diantar' : 'Belum Diantar')
+                    ->label(fn(Order $record): string => $record->status === 'delivered' ? 'Sudah Diantar' : 'Belum Diantar')
                     ->button()
-                    ->color(fn (Order $record): string => $record->status === 'delivered' ? 'success' : 'primary')
-                    ->disabled(fn (Order $record): bool => in_array($record->status, ['delivered', 'cancelled'])) // Nonaktif jika sudah diantar atau dibatalkan
-                    ->requiresConfirmation() // Konfirmasi sebelum mengubah status
+                    ->color(fn(Order $record): string => $record->status === 'delivered' ? 'success' : 'primary')
+                    ->disabled(fn(Order $record): bool => in_array($record->status, ['delivered', 'cancelled']))
+                    ->requiresConfirmation()
+                    ->modalHeading('Konfirmasi Pengantaran')
+                    ->modalSubheading('Apakah kamu yakin ingin menandai pesanan ini sebagai sudah diantar?')
+                    ->modalButton('Ya, Antar Sekarang')
                     ->action(function (Order $record): void {
-                        // Ubah status ke 'delivered' atau 'completed' (sesuaikan logika Anda)
-                        // Jika sudah 'completed' dan ingin menjadi 'delivered'
-                        // Jika 'pending' atau 'processing' menjadi 'delivered'
-                        if ($record->status === 'pending' || $record->status === 'processing' || $record->status === 'completed') {
+                        if (in_array($record->status, ['pending', 'processing', 'completed'])) {
                             $record->status = 'delivered';
+                            $record->save();
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Status pesanan berhasil diperbarui!')
+                                ->success()
+                                ->send();
                         }
-                        // Anda bisa tambahkan logika untuk "rollback" jika "sudah diantar" ingin dikembalikan
-                        // else if ($record->status === 'delivered') {
-                        //     $record->status = 'completed'; // Atau status sebelumnya
-                        // }
-                        $record->save();
-                        \Filament\Notifications\Notification::make()
-                            ->title('Status pesanan berhasil diperbarui!')
-                            ->success()
-                            ->send();
-                    })
-                    // Anda bisa menambahkan icon
-                    // ->icon(fn (Order $record): string => $record->status === 'delivered' ? 'heroicon-o-check-circle' : 'heroicon-o-truck')
+                    }),
             ])
+
             ->bulkActions([
                 // Tables\Actions\DeleteBulkAction::make(), // Jika ingin bisa bulk delete
             ]);

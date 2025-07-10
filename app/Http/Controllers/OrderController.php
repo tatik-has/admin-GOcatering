@@ -5,32 +5,26 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
-use Carbon\Carbon; // Pastikan Carbon di-import
+use Carbon\Carbon;
 
 class OrderController extends Controller
 {
-    /**
-     * Get a list of orders for the admin dashboard.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function index(Request $request)
     {
         $perPage = $request->input('per_page', 10);
         $search = $request->input('search');
-        $statusFilter = $request->input('status'); // Untuk filter berdasarkan status
+        $statusFilter = $request->input('status');
 
         $orders = Order::query()
-            ->with('user') // Eager load user jika relasi ada
+            ->with('user')
             ->when($search, function ($query, $search) {
                 $query->where('customer_name', 'like', '%' . $search . '%')
                       ->orWhere('delivery_address', 'like', '%' . $search . '%')
                       ->orWhere('total_amount', 'like', '%' . $search . '%')
-                      ->orWhereHas('user', function ($q) use ($search) { // Cari juga di nama user
+                      ->orWhereHas('user', function ($q) use ($search) {
                           $q->where('name', 'like', '%' . $search . '%');
                       })
-                      ->orWhereJsonContains('items', ['menu_name' => $search]); // Cari di nama menu dalam JSON items
+                      ->orWhereJsonContains('items', ['menu_name' => $search]);
             })
             ->when($statusFilter, function ($query, $statusFilter) {
                 $query->where('status', $statusFilter);
@@ -38,12 +32,10 @@ class OrderController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
-        // Transformasi data agar sesuai dengan kebutuhan frontend
         $formattedOrders = $orders->getCollection()->map(function ($order) {
             $customerName = $order->customer_name ?? ($order->user->name ?? 'N/A');
             $customerPhone = $order->customer_phone ?? ($order->user->phone_number ?? 'N/A');
 
-            // Menggabungkan nama menu dan jumlahnya
             $pesananDetail = [];
             $jumlahDetail = [];
             foreach ($order->items as $item) {
@@ -55,17 +47,17 @@ class OrderController extends Controller
             }
 
             return [
-                'id'               => $order->id,
+                'id'               => (int) $order->id, // PERBAIKAN: Cast ke int
                 'customer_name'    => $customerName,
                 'customer_phone'   => $customerPhone,
-                'pesanan'          => implode(' + ', $pesananDetail), // Gabungkan semua nama menu
-                'jumlah'           => implode(', ', $jumlahDetail),    // Gabungkan semua jumlah
+                'pesanan'          => implode(' + ', $pesananDetail),
+                'jumlah'           => implode(', ', $jumlahDetail),
                 'request_note'     => $order->request_note ?? '-',
                 'total_amount'     => 'Rp. ' . number_format($order->total_amount, 0, ',', '.'),
                 'order_date'       => Carbon::parse($order->created_at)->translatedFormat('d F Y'),
                 'delivery_address' => $order->delivery_address,
                 'status'           => $order->status,
-                'is_delivered'     => $order->status === 'delivered' || $order->status === 'completed', // Status untuk aksi di frontend
+                'is_delivered'     => $order->status === 'delivered' || $order->status === 'completed',
                 'created_at'       => $order->created_at->toDateTimeString(),
             ];
         });
@@ -79,24 +71,17 @@ class OrderController extends Controller
                 'next'  => $orders->nextPageUrl(),
             ],
             'meta' => [
-                'current_page' => $orders->currentPage(),
-                'from'         => $orders->firstItem(),
-                'last_page'    => $orders->lastPage(),
+                'current_page' => (int) $orders->currentPage(), // PERBAIKAN: Cast ke int
+                'from'         => (int) $orders->firstItem(),
+                'last_page'    => (int) $orders->lastPage(),
                 'path'         => $orders->path(),
-                'per_page'     => $orders->perPage(),
-                'to'           => $orders->lastItem(),
-                'total'        => $orders->total(),
+                'per_page'     => (int) $orders->perPage(),
+                'to'           => (int) $orders->lastItem(),
+                'total'        => (int) $orders->total(),
             ],
         ]);
     }
 
-    /**
-     * Update the status of an order.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
@@ -104,15 +89,11 @@ class OrderController extends Controller
         ]);
 
         $order->status = $request->status;
-        // if ($request->status === 'delivered') {
-        //     $order->delivered_at = Carbon::now();
-        // } else {
-        //     $order->delivered_at = null;
-        // }
         $order->save();
 
-        return response()->json(['message' => 'Order status updated successfully.', 'order' => $order->fresh()]); // Mengembalikan data order terbaru
+        return response()->json([
+            'message' => 'Order status updated successfully.',
+            'order' => $order->fresh()
+        ]);
     }
-
-    // Metode lain (show, delete) bisa ditambahkan jika perlu
 }

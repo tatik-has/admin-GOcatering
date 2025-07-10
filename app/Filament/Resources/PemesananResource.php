@@ -10,8 +10,14 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\ViewAction;
+use Carbon\Carbon;
 
 class PemesananResource extends Resource
 {
@@ -36,28 +42,39 @@ class PemesananResource extends Resource
                     ->required(),
 
                 TextInput::make('nama_pelanggan')
+                    ->label('Nama Pelanggan')
                     ->required(),
 
                 TextInput::make('pesanan')
+                    ->label('Pesanan')
                     ->required(),
 
-                TextInput::make('request'),
+                Textarea::make('request')
+                    ->label('Request'),
 
                 TextInput::make('jumlah')
+                    ->label('Jumlah')
                     ->required(),
 
                 TextInput::make('total_harga')
+                    ->label('Total Harga')
                     ->numeric()
+                    ->prefix('Rp')
                     ->required(),
 
-                TextInput::make('tanggal_pesan')
-                    ->type('date')
+                DatePicker::make('tanggal_pesan')
+                    ->label('Tanggal Pesan')
+                    ->default(Carbon::now('Asia/Jakarta')->format('Y-m-d'))
+                    ->timezone('Asia/Jakarta')
                     ->required(),
 
                 TextInput::make('alamat')
+                    ->label('Alamat')
                     ->required(),
 
                 TextInput::make('telepon')
+                    ->label('Telepon')
+                    ->tel()
                     ->required(),
             ]);
     }
@@ -77,38 +94,49 @@ class PemesananResource extends Resource
                     ->searchable(),
 
                 TextColumn::make('nama_pelanggan')
-                    ->label('Nama Pelanggan'),
+                    ->label('Nama Pelanggan')
+                    ->searchable(),
 
                 TextColumn::make('pesanan')
-                    ->label('Pesanan'),
+                    ->label('Pesanan')
+                    ->searchable()
+                    ->wrap(),
 
                 TextColumn::make('request')
-                    ->label('Request'),
+                    ->label('Request')
+                    ->default('-')
+                    ->searchable(),
 
                 TextColumn::make('jumlah')
                     ->label('Jumlah'),
 
                 TextColumn::make('total_harga')
                     ->label('Total Harga')
-                    ->money('IDR'), // Pastikan format mata uang yang benar untuk Indonesia, atau hapus jika tidak perlu.
+                    ->money('IDR', 'id_ID'),
 
                 TextColumn::make('tanggal_pesan')
                     ->label('Tanggal Pesan')
-                    ->date(), // Atau date('Y-m-d') jika ingin format spesifik
+                    ->date('d F Y')
+                    ->timezone('Asia/Jakarta'),
 
                 TextColumn::make('alamat')
                     ->label('Alamat'),
 
                 TextColumn::make('telepon')
                     ->label('Telepon'),
-            ]);
+            ])
+            ->actions([
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
+            ])
+            ->defaultSort('tanggal_pesan', 'desc');
     }
 
     public static function getPages(): array
     {
         return [
-            // BARIS INI YANG HARUS DIPERBAIKI:
-            'index' => Pages\ListPemesanan::route('/'), // GANTI 'ListPemesanans' menjadi 'ListPemesanan'
+            'index' => Pages\ListPemesanan::route('/'),
             'create' => Pages\CreatePemesanan::route('/create'),
             'edit' => Pages\EditPemesanan::route('/{record}/edit'),
         ];

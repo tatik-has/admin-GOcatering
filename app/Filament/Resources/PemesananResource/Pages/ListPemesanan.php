@@ -1,53 +1,84 @@
 <?php
 
-namespace App\Filament\Resources\Pemesanan\Pages; // Sesuaikan namespace jika berbeda
+namespace App\Filament\Resources\PemesananResource\Pages;
 
 use Filament\Resources\Pages\ListRecords;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Arr; // Diperlukan untuk Arr::get() atau Arr::only()
-use App\Models\Pemesanan; // Asumsi Anda memiliki model Pemesanan yang sesuai dengan data API
+use Illuminate\Support\Arr;
+use App\Models\Pemesanan;
+use Carbon\Carbon;
 
 class ListPemesanan extends ListRecords
 {
-    protected static string $resource = \App\Filament\Resources\PemesananResource::class; // Pastikan namespace penuh
+    protected static string $resource = \App\Filament\Resources\PemesananResource::class;
 
     public function getTableRecords(): LengthAwarePaginator
     {
-        // 1. Ambil data dari API
-        $response = Http::get('http://192.168.1.26:8000/api/pesanan');
-        $data = $response->json(); // Ini akan menjadi array PHP, misalnya: [[id:1, nama: 'A'], [id:2, nama: 'B']]
+        try {
+            // 1. Ambil data dari API
+            $response = Http::timeout(30)->get('http://192.168.0.107:8000/api/pesanan');
+            
+            if (!$response->successful()) {
+                throw new \Exception('API request failed');
+            }
+            
+            $data = $response->json();
 
-        // 2. Konversi data API menjadi koleksi objek "model semu"
-        // Ini adalah langkah KRUSIAL agar kolom Filament bisa membaca data
-        $itemsAsModels = collect($data)->map(function ($item) {
-            // Anda bisa membuat instance model Pemesanan dan mengisi atributnya.
-            // Pastikan atribut yang Anda isi sesuai dengan kolom di PemesananResource Anda.
-            $model = new Pemesanan(); // Pastikan model Pemesanan bisa di-instantiate tanpa koneksi DB di sini
-            $model->fill($item); // Mengisi atribut model dari array item API
-            // Jika ada field khusus atau relasi, Anda mungkin perlu mengatur secara manual:
-            // $model->id = Arr::get($item, 'id');
-            // $model->nama_pelanggan = Arr::get($item, 'nama_field_dari_api');
-            // ... dan seterusnya
-            return $model;
-        });
+            // 2. Konversi array JSON ke koleksi model semu
+            $itemsAsModels = collect($data)->map(function ($item) {
+                $model = new Pemesanan();
 
-        // 3. Ambil parameter paginasi dari request Filament
-        // Filament akan mengirimkan parameter 'page' dan 'perPage' (limit)
-        $page = request()->get('page', 1);
-        $perPage = $this->getTableRecordsPerPage() ?? 10; // Ambil dari konfigurasi tabel Filament atau default 10
+                // Isi atribut dasar
+                $model->id = Arr::get($item, 'id');
+                $model->nama_pelanggan = Arr::get($item, 'nama_pelanggan');
+                $model->pesanan = Arr::get($item, 'pesanan', '-'); // Nama menu yang dipesan
+                $model->jumlah = Arr::get($item, 'jumlah');
+                $model->total_harga = Arr::get($item, 'total');
+                $model->alamat = Arr::get($item, 'alamat');
+                $model->telepon = Arr::get($item, 'no_hp');
+                $model->status = Arr::get($item, 'status');
+                
+                // Pastikan request tidak null dan tampilkan dengan benar
+                $model->request = Arr::get($item, 'request') ?? '-';
+                
+                // Konversi created_at ke timezone Asia/Jakarta dengan benar
+                $createdAt = Arr::get($item, 'created_at');
+                if ($createdAt) {
+                    $model->created_at = Carbon::parse($createdAt)->setTimezone('Asia/Jakarta');
+                } else {
+                    $model->created_at = Carbon::now('Asia/Jakarta');
+                }
 
-        // 4. Lakukan paginasi manual pada koleksi
-        $paginatedItems = $itemsAsModels->slice(($page - 1) * $perPage, $perPage)->values();
+                // Set tanggal_pesan sesuai dengan created_at
+                $model->tanggal_pesan = $model->created_at->format('Y-m-d');
 
-        // 5. Kembalikan LengthAwarePaginator
-        return new LengthAwarePaginator(
-            $paginatedItems, // Koleksi item yang sudah dipaginasi
-            $itemsAsModels->count(), // Total jumlah item (penting untuk informasi total di paginator)
-            $perPage, // Item per halaman
-            $page, // Halaman saat ini
-            ['path' => request()->url()] // Path dasar untuk link paginasi
-        );
+                return $model;
+            });
+
+            // 3. Setup pagination manual
+            $page = request()->get('page', 1);
+            $perPage = $this->getTableRecordsPerPage() ?? 10;
+
+            $paginatedItems = $itemsAsModels->slice(($page - 1) * $perPage, $perPage)->values();
+
+            return new LengthAwarePaginator(
+                $paginatedItems,
+                $itemsAsModels->count(),
+                $perPage,
+                $page,
+                ['path' => request()->url()]
+            );
+
+        } catch (\Exception $e) {
+            // Jika API gagal, return empty paginator
+            return new LengthAwarePaginator(
+                collect([]),
+                0,
+                10,
+                1,
+                ['path' => request()->url()]
+            );
+        }
     }
 }
