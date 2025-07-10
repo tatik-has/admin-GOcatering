@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\KateringController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PemesananController;
@@ -25,18 +26,18 @@ Route::get('/paketan', [PaketanController::class, 'index']);
 Route::get('/paketan/{id}', [PaketanController::class, 'show']); // Detail paketan berdasarkan ID
 
 // ======================= KULINER ========================
-Route::get('/kuliner', [MenuController::class, 'kuliner']);
-Route::get('/kuliner/{id}', [MenuController::class, 'showKuliner']);
+Route::get('/kuliner', [KateringController::class, 'index']);
+Route::get('/kuliner/{id}', [KateringController::class, 'show']);
 
 // ======================= KATERING =======================
-Route::get('/katering', [MenuController::class, 'katering']);
-Route::get('/katering/{id}', [MenuController::class, 'showKatering']);
+Route::get('/katering', [KateringController::class, 'index']); 
+Route::get('/katering/{id}', [KateringController::class, 'show']); 
 
 // =================== PAKET BULANAN ======================
-Route::get('/paket-bulanan', [PaketanController::class, 'paketBulanan']);
-Route::get('/paket-bulanan/{id}', [PaketanController::class, 'showPaketBulanan']);
+Route::get('/paket-bulanan', [PaketanController::class, 'index']); // ambil semua
+Route::get('/paket-bulanan/{id}', [PaketanController::class, 'show']); // ambil satu by id
 
 // ======================= PEMESANAN =====================
-Route::post('/pesanan', [pemesananController::class, 'store'])->middleware('auth:sanctum');
-Route::get('/pesanan', [pemesananController::class, 'index'])->middleware('auth:sanctum');
-Route::get('/pesanan/{order}', [pemesananController::class, 'show'])->middleware('auth:sanctum');
+Route::post('/pesanan', [PemesananController::class, 'store'])->middleware('auth:sanctum');
+Route::get('/pesanan', [PemesananController::class, 'index'])->middleware('auth:sanctum');
+Route::get('/pesanan/{order}', [PemesananController::class, 'show'])->middleware('auth:sanctum');
