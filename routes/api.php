@@ -40,7 +40,3 @@ Route::get('/paket-bulanan/{id}', [PaketanController::class, 'showPaketBulanan']
 Route::post('/pesanan', [pemesananController::class, 'store'])->middleware('auth:sanctum');
 Route::get('/pesanan', [pemesananController::class, 'index'])->middleware('auth:sanctum');
 Route::get('/pesanan/{order}', [pemesananController::class, 'show'])->middleware('auth:sanctum');
-
-// ======================= PESANAN (ADMIN FILAMENT) =======
-// Route khusus untuk Filament Admin - tanpa auth karena sudah di-handle di Filament
-// Route::get('/pesanan', [PemesananController::class, 'getAllForAdmin']);

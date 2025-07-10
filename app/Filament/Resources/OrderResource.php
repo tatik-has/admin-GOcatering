@@ -126,6 +126,11 @@ class OrderResource extends Resource
                     ->default('-')
                     ->color('secondary'), // Untuk warna abu-abu
 
+                TextColumn::make('menu.nama')
+                    ->label('NAMA')
+                    // ->default('-')
+                    ->color('secondary'), // Untuk warna abu-abu
+
                 TextColumn::make('items')
                     ->label('Jumlah')
                     ->formatStateUsing(function (string $state, Order $record) {
