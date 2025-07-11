@@ -17,7 +17,6 @@ class Menu extends Model
         'nama',
         'gambar',
         'kategori_utama',
-        'sub_kategori',
         'deskripsi',
         'harga',
         'status',

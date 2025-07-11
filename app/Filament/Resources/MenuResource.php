@@ -51,33 +51,6 @@ class MenuResource extends Resource
                             ->afterStateUpdated(fn ($state, callable $set) => $set('sub_kategori', null)),
                     ]),
 
-                    Select::make('sub_kategori')
-                        ->label('Sub Kategori')
-                        ->options(function (callable $get) {
-                            $kategori = $get('kategori_utama');
-                            return match ($kategori) {
-                                'kuliner' => [
-                                    'rendang' => 'Rendang',
-                                    'ayam_gulai' => 'Ayam Gulai',
-                                    'ayam_pop' => 'Ayam Pop',
-                                    'gulai_nangka' => 'Gulai Nangka',
-                                    'ayam_lado' => 'Ayam Lado',
-                                ],
-                                'paket_bulanan' => [
-                                    'paket_a' => 'Paket A',
-                                    'paket_b' => 'Paket B',
-                                    'paket_c' => 'Paket C',
-                                ],
-                                'katering' => [
-                                    'katering_a' => 'Katering A (1000-5000 orang)',
-                                    'katering_b' => 'Katering B (1000-5000 orang)',
-                                    'katering_c' => 'Katering C (1000-5000 orang)',
-                                ],
-                                default => [],
-                            };
-                        })
-                        ->required()
-                        ->visible(fn (callable $get) => filled($get('kategori_utama'))),
 
                     FileUpload::make('gambar')
                         ->label('Gambar Menu')
@@ -126,14 +99,6 @@ class MenuResource extends Resource
                             ->placeholder('Contoh: 1 bulan, per hari')
                             ->visible(fn (callable $get) => $get('kategori_utama') === 'paket_bulanan'),
                     ]),
-
-                    Toggle::make('is_featured')
-                        ->label('Tampilkan di Beranda')
-                        ->default(false),
-
-                    Toggle::make('is_available')
-                        ->label('Tersedia untuk Pemesanan')
-                        ->default(true),
                 ]),
 
             Section::make('Detail Khusus Paket Bulanan')
@@ -154,27 +119,6 @@ class MenuResource extends Resource
                 ])
                 ->visible(fn (callable $get) => $get('kategori_utama') === 'paket_bulanan'),
 
-            Section::make('Detail Khusus Katering')
-                ->schema([
-                    Grid::make(2)->schema([
-                        TextInput::make('min_order')
-                            ->label('Minimum Order')
-                            ->numeric()
-                            ->suffix('orang'),
-
-                        TextInput::make('max_order')
-                            ->label('Maximum Order')
-                            ->numeric()
-                            ->suffix('orang'),
-                    ]),
-
-                    Textarea::make('menu_katering')
-                        ->label('Daftar Menu Katering')
-                        ->placeholder('Tuliskan daftar menu yang disajikan dalam paket katering ini')
-                        ->rows(4),
-                ])
-                ->visible(fn (callable $get) => $get('kategori_utama') === 'katering'),
-
             Section::make('Informasi Tambahan')
                 ->schema([
                     Grid::make(2)->schema([
@@ -185,16 +129,7 @@ class MenuResource extends Resource
                             ->maxValue(5)
                             ->step(0.1)
                             ->suffix('/5'),
-
-                        TextInput::make('estimasi_waktu')
-                            ->label('Estimasi Waktu Pembuatan')
-                            ->placeholder('Contoh: 30 menit, 2 jam'),
                     ]),
-
-                    Textarea::make('catatan_khusus')
-                        ->label('Catatan Khusus')
-                        ->placeholder('Informasi tambahan tentang menu ini')
-                        ->rows(2),
                 ]),
         ]);
     }
@@ -230,25 +165,6 @@ class MenuResource extends Resource
                         };
                     }),
 
-                TextColumn::make('sub_kategori')
-                    ->label('Sub Kategori')
-                    ->formatStateUsing(function ($state) {
-                        $labels = [
-                            'rendang' => 'Rendang',
-                            'ayam_gulai' => 'Ayam Gulai',
-                            'ayam_pop' => 'Ayam Pop',
-                            'gulai_nangka' => 'Gulai Nangka',
-                            'ayam_lado' => 'Ayam Lado',
-                            'paket_a' => 'Paket A',
-                            'paket_b' => 'Paket B',
-                            'paket_c' => 'Paket C',
-                            'katering_a' => 'Katering A',
-                            'katering_b' => 'Katering B',
-                            'katering_c' => 'Katering C',
-                        ];
-                        return $labels[$state] ?? $state;
-                    }),
-
                 TextColumn::make('harga')
                     ->label('Harga')
                     ->money('IDR')
@@ -260,12 +176,6 @@ class MenuResource extends Resource
                         'success' => 'tersedia',
                         'danger' => 'habis',
                     ]),
-
-                ToggleColumn::make('is_featured')
-                    ->label('Featured'),
-
-                ToggleColumn::make('is_available')
-                    ->label('Available'),
 
                 TextColumn::make('rating')
                     ->label('Rating')

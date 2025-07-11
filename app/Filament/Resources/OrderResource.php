@@ -121,15 +121,24 @@ class OrderResource extends Resource
                         return $query->whereJsonContains('items', ['menu_name' => $search]);
                     }),
 
+                TextColumn::make('menu_names')
+                    ->label('Nama Menu')
+                    ->formatStateUsing(function (string $state, Order $record) {
+                        $items = $record->items;
+                        $menuNames = [];
+                        foreach ($items as $item) {
+                            $menuNames[] = $item['menu_name'] ?? '-';
+                        }
+                        return implode(', ', $menuNames);
+                    })
+                    ->color('secondary'),
+
                 TextColumn::make('request_note')
                     ->label('Request')
                     ->default('-')
                     ->color('secondary'), // Untuk warna abu-abu
 
-                TextColumn::make('menu.nama')
-                    ->label('NAMA')
-                    // ->default('-')
-                    ->color('secondary'), // Untuk warna abu-abu
+
 
                 TextColumn::make('items')
                     ->label('Jumlah')

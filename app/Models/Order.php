@@ -36,4 +36,16 @@ class Order extends Model
     {
         return $this->belongsTo(Menu::class);
     }
+    // Di file app/Models/Order.php
+    public function getMenuNamesAttribute()
+    {
+        if (!$this->items)
+            return '-';
+
+        $names = [];
+        foreach ($this->items as $item) {
+            $names[] = $item['menu_name'] ?? '-';
+        }
+        return implode(', ', $names);
+    }
 }
