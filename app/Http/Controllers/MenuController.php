@@ -8,15 +8,23 @@ use App\Models\Menu;
 class MenuController extends Controller
 {
     // Ambil semua data menu
-    public function index()
+    public function index(Request $request)
     {
-        $menus = Menu::all();
+        $query = Menu::query();
+
+        // Cek apakah request punya parameter ?kategori_utama=Kuliner
+        if ($request->has('kategori_utama')) {
+            $query->byKategoriUtama($request->kategori_utama);
+        }
+
+        $menus = $query->get();
 
         return response()->json([
             'message' => 'Data menu berhasil diambil',
             'data' => $menus
         ]);
     }
+
 
     // Ambil detail menu berdasarkan ID
     public function show($id)
@@ -37,46 +45,46 @@ class MenuController extends Controller
 
     // Tambah menu baru
     public function store(Request $request)
-{
-    $request->validate([
-        'nama'             => 'required|string|max:255',
-        'gambar'           => 'nullable|string',
-        'kategori_utama'   => 'required|string',
-        'sub_kategori'     => 'nullable|string',
-        'deskripsi'        => 'nullable|string',
-        'harga'            => 'required|numeric',
-        'status'           => 'required|in:tersedia,habis',
-        'porsi'            => 'required|integer|min:1',
-        'is_featured'      => 'required|boolean',
-        'is_available'     => 'required|boolean',
-        'rating'           => 'nullable|numeric',
-        'estimasi_waktu'   => 'nullable|string',
-        'catatan_khusus'   => 'nullable|string',
-        'menu_items'       => 'nullable|array', // Kalau kamu pakai JSON array
-    ]);
+    {
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'gambar' => 'nullable|string',
+            'kategori_utama' => 'required|string',
+            'sub_kategori' => 'nullable|string',
+            'deskripsi' => 'nullable|string',
+            'harga' => 'required|numeric',
+            'status' => 'required|in:tersedia,habis',
+            'porsi' => 'required|integer|min:1',
+            'is_featured' => 'required|boolean',
+            'is_available' => 'required|boolean',
+            'rating' => 'nullable|numeric',
+            'estimasi_waktu' => 'nullable|string',
+            'catatan_khusus' => 'nullable|string',
+            'menu_items' => 'nullable|array', // Kalau kamu pakai JSON array
+        ]);
 
-    $menu = Menu::create([
-        'nama'             => $request->nama,
-        'gambar'           => $request->gambar,
-        'kategori_utama'   => $request->kategori_utama,
-        'sub_kategori'     => $request->sub_kategori,
-        'deskripsi'        => $request->deskripsi,
-        'harga'            => $request->harga,
-        'status'           => $request->status,
-        'porsi'            => $request->porsi,
-        'is_featured'      => $request->is_featured,
-        'is_available'     => $request->is_available,
-        'rating'           => $request->rating,
-        'estimasi_waktu'   => $request->estimasi_waktu,
-        'catatan_khusus'   => $request->catatan_khusus,
-        'menu_items'       => $request->menu_items ? json_encode($request->menu_items) : null,
-    ]);
+        $menu = Menu::create([
+            'nama' => $request->nama,
+            'gambar' => $request->gambar,
+            'kategori_utama' => $request->kategori_utama,
+            'sub_kategori' => $request->sub_kategori,
+            'deskripsi' => $request->deskripsi,
+            'harga' => $request->harga,
+            'status' => $request->status,
+            'porsi' => $request->porsi,
+            'is_featured' => $request->is_featured,
+            'is_available' => $request->is_available,
+            'rating' => $request->rating,
+            'estimasi_waktu' => $request->estimasi_waktu,
+            'catatan_khusus' => $request->catatan_khusus,
+            'menu_items' => $request->menu_items ? json_encode($request->menu_items) : null,
+        ]);
 
-    return response()->json([
-        'message' => 'Menu berhasil ditambahkan',
-        'data'    => $menu
-    ], 201);
-}
+        return response()->json([
+            'message' => 'Menu berhasil ditambahkan',
+            'data' => $menu
+        ], 201);
+    }
 
 
     // Update menu
@@ -91,16 +99,21 @@ class MenuController extends Controller
         }
 
         $request->validate([
-            'nama'      => 'sometimes|required|string|max:255',
-            'gambar'    => 'nullable|string',
-            'kategori'  => 'sometimes|required|string',
+            'nama' => 'sometimes|required|string|max:255',
+            'gambar' => 'nullable|string',
+            'kategori' => 'sometimes|required|string',
             'deskripsi' => 'nullable|string',
-            'harga'     => 'sometimes|required|numeric',
-            'status'    => 'sometimes|required|in:tersedia,habis',
+            'harga' => 'sometimes|required|numeric',
+            'status' => 'sometimes|required|in:tersedia,habis',
         ]);
 
         $menu->update($request->only([
-            'nama', 'gambar', 'kategori', 'deskripsi', 'harga', 'status'
+            'nama',
+            'gambar',
+            'kategori',
+            'deskripsi',
+            'harga',
+            'status'
         ]));
 
         return response()->json([
